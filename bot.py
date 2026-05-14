@@ -45,37 +45,40 @@ def get_youtube_text(url: str) -> str:
         raise Exception("❌ Не удалось определить ID видео.")
 
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(
-            video_id,
-            languages=["ru", "en"]
-        )
+        ytt_api = YouTubeTranscriptApi()
+        transcript_list = ytt_api.list(video_id)
 
-        text = " ".join([item["text"] for item in transcript])
+        available = []
+
+        for transcript in transcript_list:
+            available.append(
+                f"{transcript.language_code} | generated={transcript.is_generated}"
+            )
+
+        try:
+            transcript = transcript_list.find_transcript(["ru", "en"])
+        except:
+            try:
+                transcript = transcript_list.find_generated_transcript(["ru", "en"])
+            except:
+                raise Exception(
+                    "❌ Субтитры найдены, но не подходят по языку.\n\n"
+                    "Доступные субтитры:\n" + "\n".join(available)
+                )
+
+        fetched = transcript.fetch()
+        text = " ".join([item.text for item in fetched])
 
         if len(text) < 100:
-            raise Exception()
+            raise Exception("❌ Субтитры получены, но текста слишком мало.")
 
         return text
 
-    except Exception:
-
-        try:
-            transcript = YouTubeTranscriptApi.get_transcript(video_id)
-
-            text = " ".join([item["text"] for item in transcript])
-
-            if len(text) < 100:
-                raise Exception()
-
-            return text
-
-        except Exception:
-
-            raise Exception(
-                "❌ У этого видео недоступны субтитры.\n\n"
-                "Видео либо не содержит captions, либо YouTube ограничил доступ к ним."
-            )
-            
+    except Exception as e:
+        raise Exception(
+            "❌ Не удалось получить субтитры YouTube.\n\n"
+            f"Причина:\n{e}"
+        )
 def get_article_text(url: str) -> str:
     headers = {
         "User-Agent": "Mozilla/5.0"
