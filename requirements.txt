@@ -4,3 +4,4 @@ python-dotenv
 python-telegram-bot
 google-genai
 youtube-transcript-api==1.2.2
+flask
