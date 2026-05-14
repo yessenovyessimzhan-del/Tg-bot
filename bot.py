@@ -54,59 +54,47 @@ def get_youtube_text(url: str) -> str:
 
     try:
 
-        session = Session()
+        transcript = YouTubeTranscriptApi.get_transcript(
+            video_id,
+            languages=["ru", "en"]
+        )
 
-        with open("cookies.txt", "r", encoding="utf-8") as f:
-            cookies_raw = f.read()
-
-        for line in cookies_raw.splitlines():
-
-            if line.startswith("#") or not line.strip():
-                continue
-
-            parts = line.split("\t")
-
-            if len(parts) >= 7:
-                name = parts[5]
-                value = parts[6]
-
-                session.cookies.set(name, value)
-
-        ytt_api = YouTubeTranscriptApi(http_client=session)
-
-        transcript_list = ytt_api.list(video_id)
-
-        transcript = None
-
-        try:
-            transcript = transcript_list.find_transcript(["ru", "en"])
-        except:
-            pass
-
-        if transcript is None:
-            try:
-                transcript = transcript_list.find_generated_transcript(
-                    ["ru", "en"]
-                )
-            except:
-                pass
-
-        if transcript is None:
-            raise Exception("Субтитры не найдены.")
-
-        fetched = transcript.fetch()
-
-        text = " ".join([item.text for item in fetched])
+        text = " ".join(
+            [item["text"] for item in transcript]
+        )
 
         if len(text) < 100:
-            raise Exception("Слишком мало текста.")
+            raise Exception(
+                "Слишком мало текста."
+            )
 
         return text
 
-    except Exception as e:
-        raise Exception(
-            f"❌ Не удалось получить субтитры.\n\n{e}"
-        )
+    except Exception:
+
+        try:
+
+            transcript = YouTubeTranscriptApi.get_transcript(
+                video_id
+            )
+
+            text = " ".join(
+                [item["text"] for item in transcript]
+            )
+
+            if len(text) < 100:
+                raise Exception()
+
+            return text
+
+        except Exception:
+
+            raise Exception(
+                "❌ У этого видео недоступны субтитры.\n\n"
+                "Видео либо не содержит captions, либо "
+                "YouTube ограничил доступ к ним."
+            )
+            
 def get_article_text(url: str) -> str:
     headers = {
         "User-Agent": "Mozilla/5.0"
