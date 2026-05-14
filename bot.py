@@ -1,6 +1,8 @@
 import os
 import re
 import requests
+from flask import Flask
+from threading import Thread
 from requests import Session
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -19,6 +21,11 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 client = genai.Client(api_key=GEMINI_API_KEY)
 user_languages = {}
 user_sources = {}
+web_app = Flask(__name__)
+
+@web_app.route("/")
+def home():
+    return "Telegram bot is running!"
 
 def is_youtube_url(url: str) -> bool:
     return "youtube.com" in url or "youtu.be" in url
@@ -360,7 +367,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"{t['error']}\n{e}"
         )
-
+        
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    web_app.run(host="0.0.0.0", port=port)
+    
 def main():
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
@@ -382,6 +393,7 @@ def main():
     )
 
     print("Бот запущен...")
+    Thread(target=run_web).start()
     app.run_polling()
 
 
