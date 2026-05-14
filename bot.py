@@ -45,40 +45,33 @@ def get_youtube_text(url: str) -> str:
         raise Exception("❌ Не удалось определить ID видео.")
 
     try:
-        ytt_api = YouTubeTranscriptApi()
+        ytt_api = YouTubeTranscriptApi(
+            cookies="cookies.txt"
+        )
+
         transcript_list = ytt_api.list(video_id)
-
-        available = []
-
-        for transcript in transcript_list:
-            available.append(
-                f"{transcript.language_code} | generated={transcript.is_generated}"
-            )
 
         try:
             transcript = transcript_list.find_transcript(["ru", "en"])
         except:
-            try:
-                transcript = transcript_list.find_generated_transcript(["ru", "en"])
-            except:
-                raise Exception(
-                    "❌ Субтитры найдены, но не подходят по языку.\n\n"
-                    "Доступные субтитры:\n" + "\n".join(available)
-                )
+            transcript = transcript_list.find_generated_transcript(
+                ["ru", "en"]
+            )
 
         fetched = transcript.fetch()
+
         text = " ".join([item.text for item in fetched])
 
         if len(text) < 100:
-            raise Exception("❌ Субтитры получены, но текста слишком мало.")
+            raise Exception()
 
         return text
 
     except Exception as e:
         raise Exception(
-            "❌ Не удалось получить субтитры YouTube.\n\n"
-            f"Причина:\n{e}"
+            f"❌ Не удалось получить субтитры.\n\n{e}"
         )
+        
 def get_article_text(url: str) -> str:
     headers = {
         "User-Agent": "Mozilla/5.0"
