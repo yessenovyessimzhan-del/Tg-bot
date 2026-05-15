@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+from typing import Optional
 from flask import Flask
 from threading import Thread
 from requests import Session
@@ -31,7 +32,7 @@ def is_youtube_url(url: str) -> bool:
     return "youtube.com" in url or "youtu.be" in url
 
 
-def get_youtube_id(url: str) -> str | None:
+def get_youtube_id(url: str) -> Optional[str]:
     patterns = [
         r"v=([^&]+)",
         r"youtu\.be/([^?&]+)",
